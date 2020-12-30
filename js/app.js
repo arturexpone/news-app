@@ -1,3 +1,6 @@
+//DOM elements
+const newsContainer = document.querySelector('.news-container .row');
+
 class News {
     proxyURL = 'https://cors-anywhere.herokuapp.com/';
 
@@ -6,9 +9,9 @@ class News {
         this.apiUrl = url;
     }
 
-    topHeadlines(country = 'ru', callback) {
+    topHeadlines(country = 'ru', callback, query) {
         const result = http.get(
-            `${this.proxyURL + this.apiUrl}/top-headlines?country=${country}&apiKey=${this.apiKey}`
+            `${this.proxyURL + this.apiUrl}/top-headlines?country=${country}${query ? '&category=' + query : ''}&apiKey=${this.apiKey}`
         );
         result.then(callback);
     }
@@ -20,13 +23,12 @@ class News {
         result.then(callback);
     }
 
-    loadNews() {
-        this.topHeadlines('ru', this.onGetResponse);
+    loadNews(query = '') {
+        this.topHeadlines('ru', this.onGetResponse, query);
     }
 
     onGetResponse = (res) => {
         const articles = res.articles;
-        console.log(this)
         this.renderNews(articles);
     }
 
@@ -51,7 +53,6 @@ class News {
     }
 
     renderNews(news) {
-        const newsContainer = document.querySelector('.news-container .row');
         let fragment = '';
 
         news.forEach(newsItem => {
@@ -59,19 +60,18 @@ class News {
             fragment += el;
         });
 
-        newsContainer.insertAdjacentHTML('afterbegin', fragment);
+        newsContainer.classList.add('b-show');
+
+        newsContainer.innerHTML = fragment;
+
     }
 }
 
 const http = {
-    get: async (url, query) => {
+    get: async (url) => {
         let result;
         try {
-            const response = await fetch(`${url + (query ? `?${query}`: '')}`, {
-                method: 'GET',
-                'Access-Control-Request-Method': 'GET',
-                'Access-Control-Request-Headers': 'Content-Type, x-requested-with',
-            });
+            const response = await fetch(url);
             if (response.ok) {
                 result = await response.json();
             } else {
@@ -111,4 +111,11 @@ const newsService = new News('85540e429d6746bcbafad77a05c7adff', 'https://newsap
 document.addEventListener('DOMContentLoaded',  e => {
     M.AutoInit();
     newsService.loadNews();
+});
+
+document.getElementById('category').addEventListener('change', e => {
+    const value = e.target.value;
+    newsContainer.innerHTML = `<h1>Load...</h1>`;
+    newsContainer.classList.remove('b-show');
+    newsService.loadNews(value);
 });
