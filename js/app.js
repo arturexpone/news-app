@@ -1,9 +1,4 @@
-// init selects materialize
-document.addEventListener('DOMContentLoaded',  e => {
-    M.AutoInit();
-});
-
-class Service {
+class News {
     proxyURL = 'https://cors-anywhere.herokuapp.com/';
 
     constructor(key, url) {
@@ -19,7 +14,52 @@ class Service {
     }
 
     everything(query = '', callback) {
+        const result = http.get(
+            `${this.proxyURL + this.apiUrl}/everything?q=${query}&apiKey=${this.apiKey}`
+        );
+        result.then(callback);
+    }
 
+    loadNews() {
+        this.topHeadlines('ru', this.onGetResponse);
+    }
+
+    onGetResponse = (res) => {
+        const articles = res.articles;
+        console.log(this)
+        this.renderNews(articles);
+    }
+
+    newsTemplate(news) {
+        const {urlToImage, title, url, description} = news;
+        return `
+        <div class="col s12">
+            <div class="card">
+                <div class="card-image">
+                    <img src=${urlToImage} alt=${title}>
+                    <span class="card-title">${title || ''}</span>
+                </div>
+                <div class="card-content">
+                    <p>${description || ''}</p>
+                </div>
+                <div class="card-action">
+                    <a href=${url}>Read more</a>
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    renderNews(news) {
+        const newsContainer = document.querySelector('.news-container .row');
+        let fragment = '';
+
+        news.forEach(newsItem => {
+            const el = this.newsTemplate(newsItem);
+            fragment += el;
+        });
+
+        newsContainer.insertAdjacentHTML('afterbegin', fragment);
     }
 }
 
@@ -65,10 +105,10 @@ const http = {
     }
 }
 
-const newsService = new Service('85540e429d6746bcbafad77a05c7adff', 'https://newsapi.org/v2');
+const newsService = new News('85540e429d6746bcbafad77a05c7adff', 'https://newsapi.org/v2');
 
-newsService.topHeadlines('ru', res => {
-    console.log(res);
+// init selects materialize
+document.addEventListener('DOMContentLoaded',  e => {
+    M.AutoInit();
+    newsService.loadNews();
 });
-
-
